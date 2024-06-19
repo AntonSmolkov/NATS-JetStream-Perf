@@ -5,7 +5,7 @@ metadata:
     app.kubernetes.io/name: tools-perftester-producer
   name: tools-perftester-producer
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app.kubernetes.io/name: tools-perftester-producer
@@ -50,7 +50,7 @@ spec:
             - name: NATS_PRODUCERS_USE_SINGLE_SUBJECT
               value: "true"
             - name: NATS_PRODUCERS_PARALLEL
-              value: "1280"
+              value: "128"
             - name: NATS_PRODUCERS_BATCH_SIZE
               value: "1000"
             - name: NATS_PRODUCERS_USE_DEDICATED_CONNECTIONS
