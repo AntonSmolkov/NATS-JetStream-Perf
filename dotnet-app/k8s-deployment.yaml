@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/name: tools-perftester-producer
+  name: tools-perftester-producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tools-perftester-producer
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 100%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tools-perftester-producer
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                        - tools-perftester-producer
+                topologyKey: kubernetes.io/hostname
+              weight: 100
+      containers:
+        - env:
+            - name: NATS_URL
+              value: nats://nats-headless:4222
+            - name: NATS_TLS_SKIP_VERIFY
+              value: "false"
+            - name: NATS_TLS_CA_CERT_PATH
+              value: /etc/nats-ca-cert/ca.crt
+            - name: NATS_USERNAME
+              value: user
+            - name: NATS_PASSWORD
+              value: password
+            - name: NATS_PRODUCERS_ENABLED
+              value: "true"
+            - name: NATS_PRODUCERS_INCLUDE_MESSAGE_ID
+              value: "false"
+            - name: NATS_PRODUCERS_USE_SINGLE_SUBJECT
+              value: "true"
+            - name: NATS_PRODUCERS_PARALLEL
+              value: "1280"
+            - name: NATS_PRODUCERS_BATCH_SIZE
+              value: "1000"
+            - name: NATS_PRODUCERS_USE_DEDICATED_CONNECTIONS
+              value: "false"
+            - name: NATS_JETSTREAMS_PARTITIONS_COUNT
+              value: "128"
+              # Set replicas:1, NATS_PRODUCERS_PARALLEL: 0 , NATS_JETSTREAMS_CREATE:1 , to create JetStream partitions beforehand
+            - name: NATS_JETSTREAMS_CREATE 
+              value: "false"
+            - name: NATS_JETSTREAMS_DEDUP_WINDOW_SEC
+              value: "0"
+            - name: NATS_JETSTREAMS_COMPRESSION_ENABLED
+              value: "false"
+            - name: NATS_JETSTREAMS_USE_IN_MEMORY_STORAGE
+              value: "true"
+          image: docker-group.idp.yc.ziiot.ru/digital-plant/zif-udl-tools-nats-perf-tester:0.0.1-alpha.14
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 300
+            httpGet:
+              path: /health/liveness
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          name: tools-perftester-producer
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health/readiness
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          resources:
+            limits:
+              cpu: "5"
+              memory: 10Gi
+            requests:
+              cpu: "5"
+              memory: 10Gi
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+          volumeMounts:
+          - mountPath: /etc/nats-ca-cert
+            name: tls-ca
+      volumes:
+        - name: tls-ca
+          secret:
+            defaultMode: 420
+            secretName: nats-tls

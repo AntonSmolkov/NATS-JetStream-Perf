@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package Tools.NatsPerfTester.Dtos;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+// Message for UdlValue
+message UdlValue {
+  string property_id = 1;
+  TypedValue value = 2; // Using google.protobuf.Value to handle different types
+  google.protobuf.Timestamp timestamp = 3;
+  UdlValueQualityType quality_type = 4;
+  UdlValueQualityStatus quality_status = 5;
+}
+
+// Специальный тип, который может эффективно нести в себе значения разных типов (oneof)
+message TypedValue {
+  oneof typed_value_oneof {
+    bool boolean = 1;
+    .google.protobuf.Timestamp date_time = 2;
+    string decimal = 3;
+    double double = 4;
+    string guid = 5;
+    int32 integer = 6;
+    int64 long = 7;
+    string string = 8;
+    google.protobuf.NullValue null_value = 9;
+  }
+}
+
+enum UdlValueQualityType {
+  NO_QUALITY = 0;
+  GOOD = 1;
+  BAD = 2;
+}
+
+enum UdlValueQualityStatus {
+  STUB_STATUS_1 = 0;
+  STUB_STATUS_2 = 1;
+  STUB_STATUS_3 = 2;
+}
+
+// Enum for UdlValueStatus
+enum UdlValueStatus {
+  NONE = 0;
+  ON = 1;
+  START_VALUE = 2;
+  CURRENT = 3;
+  HISTORY = 4;
+  FUTURE = 5;
+  LAST_KNOWN = 6;
+  OFF = 7;
+  NO_START_VALUE = 8;
+  NO_VALUE = 9;
+  ERROR = 10;
+  ARCHIVE_VALUE = 11;
+  END_DATA = 12;
+  ANNOTATION_VALUE = 13;
+  COMPRESSED = 14;
+  SAVED = 15;
+}
+
